@@ -18,9 +18,9 @@
         Number(configured[String(id)]) > 0;
     }
     function hasRenderedRecommendations() {
-      // WP1 renders one checkbox for the selected main variation, then one per
-      // recommendation. Never show the table for the main variation alone.
-      return $box.find('.bought_together_tbl input[type="checkbox"]').length > 1;
+      // WP1 supports both row and table layouts. Both provide one checkbox
+      // for the selected main variation plus one per recommendation.
+      return $box.find('input[type="checkbox"][data-prd-id]').length > 1;
     }
     function hideOffer() {
       $box.hide();
