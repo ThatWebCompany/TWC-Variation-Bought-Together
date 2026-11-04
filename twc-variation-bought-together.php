@@ -161,7 +161,8 @@ final class TWC_Variation_Bought_Together {
                 $attr = rawurlencode( wp_json_encode( $attributes ) );
             }
             $checkbox = '<input type="checkbox" checked data-prd-id="' . esc_attr( $id ) .
-                '" data-attribute="' . esc_attr( $attr ) . '" data-price="' . esc_attr( $p->get_price() ) . '">';
+                '" data-attribute="' . esc_attr( $attr ) . '" data-price="' . esc_attr( $p->get_price() ) .
+                '" data-display-price="' . esc_attr( wc_get_price_to_display( $p ) ) . '">';
             $name = esc_html( $p->get_name() );
             $label = 0 === $index
                 ? '<strong>' . esc_html__( 'This item', 'twc-variation-bought-together' ) . ':</strong> ' . $name
