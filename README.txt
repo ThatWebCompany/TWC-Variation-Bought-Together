@@ -1,4 +1,4 @@
-TWC Variation Bought Together v1.0.4
+TWC Variation Bought Together v1.0.5
 ===================================
 
 Companion extension for WooCommerce and the licensed WP1
@@ -51,6 +51,10 @@ LIMITATIONS / QA
   validation was performed for this release.
 
 VERSION HISTORY
+1.0.5: After a successful WP1 Bought Together AJAX add, trigger the
+       FunnelKit Side Cart refresh/open event (fkcart_update_side_cart).
+       Failed requests and redirect responses do not open the drawer.
+       The original WP1 button/cart handler is unchanged.
 1.0.4: Use a dedicated variation renderer and AJAX endpoint, preserve WP1
        Add Both to Cart event processing, remove parent bootstrap.
 1.0.3: Preserve parent rendering during initial page load.
