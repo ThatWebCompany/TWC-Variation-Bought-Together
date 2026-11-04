@@ -1,4 +1,4 @@
-TWC Variation Bought Together v1.0.5
+TWC Variation Bought Together v1.0.6
 ===================================
 
 Companion extension for WooCommerce and the licensed WP1
@@ -51,6 +51,9 @@ LIMITATIONS / QA
   validation was performed for this release.
 
 VERSION HISTORY
+1.0.6: Open Elementor Pro Menu Cart after confirmed Bought Together add
+       and refreshed WooCommerce cart fragments. Replaces the ineffective
+       FunnelKit integration. Requires active Elementor Menu Cart widget.
 1.0.5: After a successful WP1 Bought Together AJAX add, trigger the
        FunnelKit Side Cart refresh/open event (fkcart_update_side_cart).
        Failed requests and redirect responses do not open the drawer.
