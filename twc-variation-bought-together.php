@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TWC Variation Bought Together
  * Description: Adds per-variation Bought Together selectors and integrates with Bought Together for WooCommerce (WP1).
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: That Web Company
  * Requires Plugins: woocommerce, bought-together-for-woocommerce
  * Requires PHP: 7.4
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class TWC_Variation_Bought_Together {
     const META = '_twc_variation_bought_together_ids';
-    const VERSION = '1.0.2';
+    const VERSION = '1.0.3';
 
     public static function init() {
         add_action( 'woocommerce_product_after_variable_attributes', [ __CLASS__, 'render_field' ], 999, 3 );
@@ -101,17 +101,10 @@ final class TWC_Variation_Bought_Together {
             return $single ? $ids : [ $ids ];
         }
 
-        // On the product page provide a seed list so WP1 renders its AJAX container even
-        // when the parent product has no manually assigned Bought Together products.
-        if ( ! function_exists( 'is_product' ) || ! is_product() || (int) get_queried_object_id() !== $parent_id ) { return $value; }
-        $seed = [];
-        foreach ( $variations as $variation_id ) {
-            $ids = self::linked_ids( $variation_id );
-            if ( $ids ) { $seed = $ids; break; }
-        }
-        // Parent-level recommendations must never leak into variable products without mappings.
-        if ( ! $seed ) { return $single ? [] : [ [] ]; }
-        return $single ? $seed : [ $seed ];
+        // Do not override WP1 during the initial page render. The original
+        // WooCommerce/Elementor integration must be allowed to create its own
+        // recommendation container from the saved parent product settings.
+        return $value;
     }
 
     public static function admin_scripts( $hook ) {
