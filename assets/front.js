@@ -2,68 +2,101 @@
 (function ($) {
   'use strict';
   $(function () {
-    var $box = $('#bought-together-products-data');
+    var $box = $('#bought-together-products-data.twc-bt');
     if (!$box.length) return;
 
-    var configured = (typeof twcVariationBoughtTogether !== 'undefined' &&
-      twcVariationBoughtTogether.variations) || {};
-    var $forms = $('form.variations_form');
-    var lastRequested = 0;
+    var $form = $('form.variations_form').first();
+    var sequence = 0;
+    var currentVariation = 0;
 
     function chosenVariation() {
-      return parseInt($forms.first().find('input.variation_id').val(), 10) || 0;
+      return parseInt($form.find('input.variation_id').val(), 10) || 0;
     }
-    function hasAssignedProducts(id) {
-      return id > 0 && Object.prototype.hasOwnProperty.call(configured, String(id)) &&
-        Number(configured[String(id)]) > 0;
+
+    function hide() {
+      $box.attr('hidden', 'hidden').hide();
     }
-    function hasRenderedRecommendations() {
-      // WP1 supports both row and table layouts. Both provide one checkbox
-      // for the selected main variation plus one per recommendation.
-      return $box.find('input[type="checkbox"][data-prd-id]').length > 1;
+
+    function updateTotal() {
+      var sum = 0;
+      var selected = 0;
+      $box.find('input[type="checkbox"][data-prd-id]:checked').each(function () {
+        sum += parseFloat($(this).attr('data-display-price')) || 0;
+        selected++;
+      });
+      var formatted = new Intl.NumberFormat('en-AU', {
+        style: 'currency', currency: 'AUD'
+      }).format(sum);
+      $box.find('[data-twc-total]').text(formatted);
+      $box.find('#bought-together-add-to-cart').prop('disabled', !selected);
     }
-    function hideOffer() {
-      $box.hide();
-    }
-    function syncOffer(requestedVariation) {
-      var current = chosenVariation();
-      if (!current || current !== requestedVariation ||
-          !hasAssignedProducts(current) || !hasRenderedRecommendations()) {
-        hideOffer();
+
+    function render(variationId) {
+      variationId = parseInt(variationId, 10) || 0;
+      currentVariation = variationId;
+      var requestId = ++sequence;
+      hide();
+      if (!variationId) {
+        $box.empty();
         return;
       }
-      $box.show();
+
+      $.ajax({
+        url: twcVariationBoughtTogether.ajaxUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          action: 'twc_bt_variation_render',
+          parent_id: $box.attr('data-id'),
+          variation_id: variationId,
+          nonce: $box.attr('data-twc-nonce')
+        }
+      }).done(function (response) {
+        if (requestId !== sequence || chosenVariation() !== variationId) return;
+        var html = response && response.success && response.data ? response.data.html : '';
+        if (!html || !String(html).trim()) {
+          $box.empty();
+          hide();
+          return;
+        }
+        $box.html(html);
+        $box.removeAttr('hidden').show();
+      }).fail(function () {
+        if (requestId === sequence) {
+          $box.empty();
+          hide();
+        }
+      });
     }
 
-    // The WP1 initial HTML uses a seed recommendation from another variation.
-    // Never display the seed until the actual selected variation has refreshed.
-    hideOffer();
+    // WP1 invokes this method after variation selections and when its
+    // checkboxes change. Preserve its Add Both to Cart listener but replace
+    // only the old parent-metadata-driven refresh path.
+    $.fn.refreshBoughtTogetherTableData = function (_checked, updateState, variationId) {
+      if (updateState) {
+        updateTotal();
+      } else {
+        render(variationId || chosenVariation());
+      }
+      return this;
+    };
 
-    $forms.on('found_variation show_variation', function (_event, variation) {
-      lastRequested = parseInt(variation && variation.variation_id, 10) || 0;
-      hideOffer();
+    // WooCommerce fires these for both normal variation forms and Elementor's
+    // product add-to-cart widget.
+    $form.on('found_variation.twcBt show_variation.twcBt', function (_event, variation) {
+      var id = parseInt(variation && variation.variation_id, 10) || chosenVariation();
+      if (id && id !== currentVariation) render(id);
     });
-    $forms.on('reset_data hide_variation', function () {
-      lastRequested = 0;
-      hideOffer();
+    $form.on('reset_data.twcBt hide_variation.twcBt', function () {
+      currentVariation = 0;
+      sequence++;
+      $box.empty();
+      hide();
     });
+    $box.on('change.twcBt', 'input[type="checkbox"][data-prd-id]', updateTotal);
 
-    $(document).ajaxComplete(function (_event, _xhr, options) {
-      if (!options || typeof options.data !== 'string' ||
-          options.data.indexOf('action=bought_together_get_table_data') === -1) return;
-
-      var matched = options.data.match(/(?:^|&)_varid=(\d+)/);
-      var responseVariation = matched ? parseInt(matched[1], 10) : 0;
-      syncOffer(responseVariation);
-    });
-
-    // A variation may be preselected on initial page load. Initiate its
-    // refresh even if WooCommerce fired show_variation before this listener.
+    hide();
     var initial = chosenVariation();
-    if (hasAssignedProducts(initial) &&
-        typeof $.fn.refreshBoughtTogetherTableData === 'function') {
-      lastRequested = initial;
-      $box.refreshBoughtTogetherTableData(String(initial), false, initial);
-    }
+    if (initial) render(initial);
   });
 })(jQuery);
