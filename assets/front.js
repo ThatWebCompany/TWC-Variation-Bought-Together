@@ -120,7 +120,7 @@
       // Reject its error notice and require the successful cart-add notice.
       var text = $('<div>').html(result.content).text();
       if (/something went wrong/i.test(text) ||
-          !/\\b[1-9]\\d*\\s+product\\(s\\) added to cart\\b/i.test(text)) {
+          !/\b[1-9]\d*\s+product\(s\) added to cart\b/i.test(text)) {
         return;
       }
 
