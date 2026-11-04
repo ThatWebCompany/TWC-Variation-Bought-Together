@@ -1,4 +1,4 @@
-TWC Variation Bought Together v1.0.0
+TWC Variation Bought Together v1.0.3
 ===================================
 
 This is a companion plugin, not a standalone replacement. Keep the licensed
@@ -19,9 +19,11 @@ BEHAVIOUR
 - Variation-specific selections are stored in variation post meta.
 - Uses the WP1 plugin's own front-end rendering, options and cart AJAX.
 - Existing parent product Bought Together settings are not modified.
-- If at least one variation has recommendations, the addon seeds initial WP1
-  output, then hides it until the chosen variation is refreshed via AJAX.
-- An empty mapping for a selected variation produces no offer.
+- The original WP1 plugin must have at least one parent-level Bought Together
+  product configured, so it can render its initial display container.
+- The addon hides the initial parent recommendation display and replaces the
+  recommendation list through the original WP1 variation-refresh AJAX.
+- An empty mapping for a selected variation hides the offer.
 - Supports normal simple and concrete variation recommendations only.
 - Existing WooCommerce subscription products/renewal flows are NOT altered.
 
@@ -33,3 +35,10 @@ IMPORTANT
   subscription; existing Club products should be tested separately.
 - No live WordPress staging/production tests have been performed.
 - WP1 plugin upgrades may change the expected AJAX action or metadata key.
+
+VERSION NOTES (1.0.3)
+- Do not override parent metadata on the initial product page render.
+- Only override Bought Together recommendation IDs during WP1 variation AJAX.
+- Requires a parent-level WP1 recommendation to bootstrap the display.
+- Remove any duplicate [bought_together_table] shortcode from Elementor.
+- Frontend and cart QA remain required after deployment.
