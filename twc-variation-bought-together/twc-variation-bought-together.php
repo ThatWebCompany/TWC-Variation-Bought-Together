@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TWC Variation Bought Together
  * Description: Adds per-variation Bought Together selectors and integrates with Bought Together for WooCommerce (WP1).
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: That Web Company
  * Requires Plugins: woocommerce, bought-together-for-woocommerce
  * Requires PHP: 7.4
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class TWC_Variation_Bought_Together {
     const META = '_twc_variation_bought_together_ids';
-    const VERSION = '1.0.0';
+    const VERSION = '1.0.1';
 
     public static function init() {
         add_action( 'woocommerce_product_after_variable_attributes', [ __CLASS__, 'render_field' ], 999, 3 );
@@ -109,7 +109,8 @@ final class TWC_Variation_Bought_Together {
             $ids = self::linked_ids( $variation_id );
             if ( $ids ) { $seed = $ids; break; }
         }
-        if ( ! $seed ) { return $value; }
+        // Parent-level recommendations must never leak into variable products without mappings.
+        if ( ! $seed ) { return $single ? [] : [ [] ]; }
         return $single ? $seed : [ $seed ];
     }
 
@@ -122,12 +123,16 @@ final class TWC_Variation_Bought_Together {
         if ( ! function_exists( 'is_product' ) || ! is_product() ) { return; }
         $product = wc_get_product( get_queried_object_id() );
         if ( ! $product || ! $product->is_type( 'variable' ) ) { return; }
-        $has_mapping = false;
+        $variation_map = [];
         foreach ( self::get_variation_ids( $product->get_id() ) as $variation_id ) {
-            if ( self::linked_ids( $variation_id ) ) { $has_mapping = true; break; }
+            $variation_map[ (string) $variation_id ] = count( self::linked_ids( $variation_id ) );
         }
-        if ( ! $has_mapping ) { return; }
+        // The absence of assignments is authoritative, including on parent products
+        // which still retain old WP1 recommendations.
         wp_enqueue_script( 'twc-variation-bt-front', plugins_url( 'assets/front.js', __FILE__ ), [ 'jquery' ], self::VERSION, true );
+        wp_localize_script( 'twc-variation-bt-front', 'twcVariationBoughtTogether', [
+            'variations' => $variation_map,
+        ] );
     }
 }
 add_action( 'plugins_loaded', [ 'TWC_Variation_Bought_Together', 'init' ], 20 );
