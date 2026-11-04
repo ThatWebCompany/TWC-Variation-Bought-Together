@@ -95,6 +95,40 @@
     });
     $box.on('change.twcBt', 'input[type="checkbox"][data-prd-id]', updateTotal);
 
+    // WP1's custom AJAX handler adds multiple cart items but only sends
+    // wc_fragment_refresh. FunnelKit Side Cart does not necessarily open
+    // for this custom action. The global ajaxComplete event fires AFTER WP1's
+    // own success/complete callbacks.
+    $(document).ajaxComplete(function (_event, xhr, settings) {
+      var data = settings && settings.data;
+      if (!data || typeof data !== 'string' ||
+          !/(?:^|&)action=bought_together_add_to_cart(?:&|$)/.test(data)) {
+        return;
+      }
+
+      // Never open on HTTP errors, WP1 nonce failure, or cart redirect.
+      if (xhr.status < 200 || xhr.status >= 300) return;
+      var result;
+      try {
+        result = JSON.parse(xhr.responseText);
+      } catch (_error) {
+        return;
+      }
+      if (!result || typeof result.content !== 'string' || result.redirect) return;
+
+      // WP1 v1.5.7 returns an HTML success notice, not structured JSON.
+      // Reject its error notice and require the successful cart-add notice.
+      var text = $('<div>').html(result.content).text();
+      if (/something went wrong/i.test(text) ||
+          !/\\b[1-9]\\d*\\s+product\\(s\\) added to cart\\b/i.test(text)) {
+        return;
+      }
+
+      // FunnelKit's supported custom-AJAX refresh/open event. The true
+      // argument requests opening the cart after its refreshed state loads.
+      $(document.body).trigger('fkcart_update_side_cart', [true]);
+    });
+
     hide();
     var initial = chosenVariation();
     if (initial) render(initial);
