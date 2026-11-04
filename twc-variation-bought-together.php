@@ -2,7 +2,7 @@
 /**
  * Plugin Name: TWC Variation Bought Together
  * Description: Adds per-variation Bought Together selectors and integrates with Bought Together for WooCommerce (WP1).
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: That Web Company
  * Requires Plugins: woocommerce, bought-together-for-woocommerce
  * Requires PHP: 7.4
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class TWC_Variation_Bought_Together {
     const META = '_twc_variation_bought_together_ids';
-    const VERSION = '1.0.4';
+    const VERSION = '1.0.5';
 
     public static function init() {
         add_action( 'woocommerce_product_after_variable_attributes', [ __CLASS__, 'render_field' ], 999, 3 );
